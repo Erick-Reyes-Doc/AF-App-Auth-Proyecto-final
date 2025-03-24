@@ -9,43 +9,57 @@ function useAsyncState(initialValue = [true, null]) {
   );
 }
 
+// Guardar datos
 export async function setStorageItemAsync(key, value) {
+  const stringValue = value ? JSON.stringify(value) : null;
+
   if (Platform.OS === 'web') {
     try {
-      if (value === null) {
+      if (stringValue === null) {
         localStorage.removeItem(key);
       } else {
-        localStorage.setItem(key, value);
+        localStorage.setItem(key, stringValue);
       }
     } catch (e) {
       console.error('Local storage is unavailable:', e);
     }
   } else {
-    if (value == null) {
+    if (stringValue == null) {
       await SecureStore.deleteItemAsync(key);
     } else {
-      await SecureStore.setItemAsync(key, value);
+      await SecureStore.setItemAsync(key, stringValue);
     }
   }
 }
 
+// Obtener datos
 export function useStorageState(key) {
   const [state, setState] = useAsyncState();
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      try {
-        if (typeof localStorage !== 'undefined') {
-          setState(localStorage.getItem(key));
+    const load = async () => {
+      let value = null;
+
+      if (Platform.OS === 'web') {
+        try {
+          value = localStorage.getItem(key);
+        } catch (e) {
+          console.error('Local storage is unavailable:', e);
         }
-      } catch (e) {
-        console.error('Local storage is unavailable:', e);
+      } else {
+        value = await SecureStore.getItemAsync(key);
       }
-    } else {
-      SecureStore.getItemAsync(key).then(value => {
-        setState(value);
-      });
-    }
+
+      try {
+        const parsed = value ? JSON.parse(value) : null;
+        setState(parsed);
+      } catch (e) {
+        console.warn('Failed to parse stored value:', e);
+        setState(null);
+      }
+    };
+
+    load();
   }, [key]);
 
   const setValue = useCallback(
@@ -58,4 +72,3 @@ export function useStorageState(key) {
 
   return [state, setValue];
 }
-

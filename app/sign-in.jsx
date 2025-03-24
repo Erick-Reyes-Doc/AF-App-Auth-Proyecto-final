@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from 'react-native';
 import { useSession } from '../ctx';
+import { router } from 'expo-router';
 
-const InputField = ({ placeholder, value, onChangeText, secureTextEntry = false }) => (
-  <TextInput
-    style={styles.input}
-    placeholder={placeholder}
-    placeholderTextColor="#bbb"
-    autoCapitalize="none"
-    secureTextEntry={secureTextEntry}
-    value={value}
-    onChangeText={onChangeText}
-  />
-);
+const { width } = Dimensions.get('window');
 
 export default function SignIn() {
   const { signIn } = useSession();
@@ -33,87 +35,162 @@ export default function SignIn() {
   };
 
   return (
-    <LinearGradient colors={['#3b3b98', '#1e3799']} style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Bienvenido</Text>
-        <InputField placeholder="Correo electrónico" value={email} onChangeText={setEmail} />
-        <InputField placeholder="Contraseña" value={password} onChangeText={setPassword} secureTextEntry />
-        
-        {errorMessage && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        )}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <View style={styles.curvedBackground} />
 
-        <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-          <Text style={styles.buttonText}>Iniciar Sesión</Text>
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <Text style={styles.title}>GreenMate</Text>
+            <Text style={styles.subtitle}>Iniciar sesión</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Correo electrónico"
+              placeholderTextColor="#FFFFDD"
+              value={email}
+              onChangeText={setEmail}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Contraseña"
+              placeholderTextColor="#FFFFDD"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+
+            <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+              <Text style={styles.buttonText}>Ingresar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => router.push('/register')} style={styles.registerButton}>
+              <Text style={styles.registerButtonText}>Registrarse</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.registerText}>¿No tienes una cuenta?</Text>
+            <TouchableOpacity onPress={() => router.push('/register')}>
+              <Text style={styles.registerLink}>Regístrate</Text>
+            </TouchableOpacity>
+          </ScrollView>
+
+          <View style={styles.imageContainer}>
+            <Image
+              source={require('../assets/planta.png')}
+              style={styles.image}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#61A3BA',
+    justifyContent: 'space-between',
+  },
+  curvedBackground: {
+    position: 'absolute',
+    top: 0,
+    width: width,
+    height: '70%',
+    backgroundColor: '#61A3BA',
+    borderBottomLeftRadius: 100,
+    borderBottomRightRadius: 100,
+    zIndex: 0,
+  },
+  content: {
+    paddingTop: 120,
+    paddingHorizontal: 30,
     alignItems: 'center',
-    paddingHorizontal: 20,
+    zIndex: 2,
   },
   title: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 20,
+    color: '#FFFFDD',
+    marginBottom: 10,
   },
-  card: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 15,
-    padding: 25,
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
-    alignItems: 'center',
+  subtitle: {
+    fontSize: 18,
+    color: '#FFFFDD',
+    marginBottom: 25,
   },
   input: {
-    height: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 10,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    color: '#fff',
+    width: '100%',
+    backgroundColor: '#3D6775',
+    padding: 14,
+    borderRadius: 25,
+    color: '#FFFFDD',
     fontSize: 16,
-    width: '100%',
-  },
-  errorContainer: {
-    backgroundColor: '#e74c3c',
-    borderRadius: 8,
-    padding: 10,
     marginBottom: 15,
-    width: '100%',
-  },
-  errorText: {
-    color: '#fff',
-    textAlign: 'center',
   },
   button: {
-    backgroundColor: '#f39c12',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    width: '100%',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 8,
+    backgroundColor: '#882D2D',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    marginTop: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  registerButton: {
+    backgroundColor: '#882D2D',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 25,
+    marginTop: 15,
+  },
+  registerButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  registerText: {
+    color: '#FFFFDD',
+    marginTop: 20,
+    fontSize: 14,
+  },
+  registerLink: {
+    color: '#FFFFDD',
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    marginTop: 4,
+  },
+  error: {
+    color: '#fff',
+    backgroundColor: '#e74c3c',
+    padding: 10,
+    borderRadius: 10,
+    textAlign: 'center',
+    width: '100%',
+    marginTop: -5,
+  },
+  imageContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  image: {
+    width: 455,
+    height: 370,
+    opacity: 0.9,
   },
 });
-
