@@ -1,4 +1,3 @@
-// app/_layout.jsx
 import { SessionProvider } from '../ctx';
 import { Stack } from 'expo-router';
 
@@ -8,12 +7,13 @@ export default function RootLayout() {
             <Stack>
                 <Stack.Screen name="sign-in" options={{ headerShown: false }} />
                 <Stack.Screen name="register" options={{ headerShown: false }} />
+                <Stack.Screen name="anadir-maceta" options={{ headerShown: false }} />
+                <Stack.Screen name="editar-planta" options={{ headerShown: false }} /> {/* ✅ ocultar encabezado */}
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen
-                    name="detalle_planta"
+                    name="detalle-planta"
                     options={{
-                        presentation: 'modal',
-                        title: 'Detalle de Planta',
+                        headerShown: false,
                     }}
                 />
             </Stack>

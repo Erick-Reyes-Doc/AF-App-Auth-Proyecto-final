@@ -43,8 +43,12 @@ export default function Register() {
             setErrorMessage('Las contraseñas no coinciden.');
         } else {
             setErrorMessage(null);
-            router.replace('/');
+            router.push('/sign-in'); // 👉 Cambiado a push
         }
+    };
+
+    const handleGoToLogin = () => {
+        router.push('/sign-in'); // 👉 Cambiado a push
     };
 
     return (
@@ -100,7 +104,7 @@ export default function Register() {
 
                         <Text style={styles.registerText}>¿Ya tienes una cuenta?</Text>
 
-                        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/sign-in')}>
+                        <TouchableOpacity style={styles.loginButton} onPress={handleGoToLogin}>
                             <Text style={styles.buttonText}>Inicia sesión</Text>
                         </TouchableOpacity>
                     </ScrollView>
@@ -196,6 +200,6 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
         width: 430,
         height: 370,
-        zIndex: 0,
+        zIndex: -1,
     },
 });

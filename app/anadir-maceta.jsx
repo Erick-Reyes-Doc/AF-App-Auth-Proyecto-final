@@ -10,25 +10,41 @@ import {
     ScrollView,
     Image,
     Alert,
+    Pressable,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+export const screenOptions = {
+    headerShown: false,
+};
 
 export default function AñadirMaceta() {
     const router = useRouter();
     const [form, setForm] = useState({
         nombre: '',
         especie: '',
-        siembra: '',
         temperatura: '',
         humedad: '',
     });
 
     const [image, setImage] = useState(null);
+    const [date, setDate] = useState(new Date());
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     const handleChange = (name, value) => {
         setForm({ ...form, [name]: value });
     };
+
+    const handleDateChange = (event, selectedDate) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            setDate(selectedDate);
+        }
+    };
+
+    const formattedDate = date.toLocaleDateString('es-MX');
 
     const handleTakePhoto = async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -74,8 +90,13 @@ export default function AñadirMaceta() {
             return;
         }
 
-        console.log('Guardando maceta:', { ...form, imagen: image });
-        // Aquí podrías enviar a Supabase
+        const datosMaceta = {
+            ...form,
+            siembra: formattedDate,
+            imagen: image,
+        };
+
+        console.log('Guardando maceta:', datosMaceta);
         router.replace('/(tabs)/inicio');
     };
 
@@ -93,7 +114,7 @@ export default function AñadirMaceta() {
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={handlePickFromGallery} style={styles.uploadButton}>
-                        <Text style={styles.uploadButtonText}>🖼 Elegir de galería</Text>
+                        <Text style={styles.uploadButtonText}>🖼 Galería</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -102,32 +123,46 @@ export default function AñadirMaceta() {
                 <TextInput
                     style={styles.input}
                     placeholder="Nombre"
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#666"
                     onChangeText={(text) => handleChange('nombre', text)}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Especie"
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#666"
                     onChangeText={(text) => handleChange('especie', text)}
                 />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Fecha de siembra (DD/MM/AAAA)"
-                    placeholderTextColor="#999"
-                    onChangeText={(text) => handleChange('siembra', text)}
-                />
+
+                {/* 📅 Calendario */}
+                <Pressable onPress={() => setShowDatePicker(true)}>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Fecha de siembra"
+                        value={formattedDate}
+                        editable={false}
+                        placeholderTextColor="#666"
+                    />
+                </Pressable>
+                {showDatePicker && (
+                    <DateTimePicker
+                        value={date}
+                        mode="date"
+                        display="default"
+                        onChange={handleDateChange}
+                    />
+                )}
+
                 <TextInput
                     style={styles.input}
                     placeholder="Temperatura ideal (°C)"
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#666"
                     keyboardType="numeric"
                     onChangeText={(text) => handleChange('temperatura', text)}
                 />
                 <TextInput
                     style={styles.input}
                     placeholder="Humedad ideal (%)"
-                    placeholderTextColor="#999"
+                    placeholderTextColor="#666"
                     keyboardType="numeric"
                     onChangeText={(text) => handleChange('humedad', text)}
                 />
@@ -145,6 +180,7 @@ export default function AñadirMaceta() {
         </KeyboardAvoidingView>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -157,30 +193,29 @@ const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 20,
         color: '#3D6775',
+        marginBottom: 25,
     },
     imageButtons: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 15,
         gap: 10,
+        marginBottom: 20,
     },
     uploadButton: {
         flex: 1,
         backgroundColor: '#A2C579',
         padding: 12,
-        borderRadius: 10,
+        borderRadius: 12,
         alignItems: 'center',
     },
     uploadButtonText: {
         color: '#fff',
         fontWeight: 'bold',
-        fontSize: 14,
     },
     previewImage: {
         width: '100%',
-        height: 200,
+        height: 180,
         borderRadius: 12,
         marginBottom: 20,
     },
@@ -189,20 +224,20 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 14,
         fontSize: 16,
-        marginBottom: 15,
+        marginBottom: 14,
         borderColor: '#ccc',
         borderWidth: 1,
     },
     buttonContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginTop: 10,
         gap: 12,
+        marginTop: 10,
     },
     button: {
         flex: 1,
         paddingVertical: 12,
-        borderRadius: 8,
+        borderRadius: 10,
         alignItems: 'center',
     },
     cancelar: {
@@ -214,5 +249,6 @@ const styles = StyleSheet.create({
     buttonText: {
         fontWeight: 'bold',
         color: '#fff',
+        fontSize: 16,
     },
 });

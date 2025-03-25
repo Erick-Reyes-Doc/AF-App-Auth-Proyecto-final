@@ -21,21 +21,15 @@ export default function HomeScreen() {
     <View style={styles.card}>
       <Image source={item.image} style={styles.plantImage} />
 
-      <View style={styles.cardContent}>
+      <View style={styles.textContainer}>
         <Text style={styles.plantName}>{item.name}</Text>
         <Text style={styles.stateText}>Estado</Text>
+        <Text style={styles.estado}>{item.estado}</Text>
       </View>
-
-      <Text style={styles.statusIcon}>{item.estado}</Text>
 
       <TouchableOpacity
         style={styles.viewButton}
-        onPress={() =>
-          router.push({
-            pathname: '/detalle-planta',
-            params: { id: item.id },
-          })
-        }
+        onPress={() => router.push(`/detalle-planta?id=${item.id}`)} // ✅ Cambio aquí
       >
         <Text style={styles.viewText}>Ver más</Text>
       </TouchableOpacity>
@@ -56,7 +50,7 @@ export default function HomeScreen() {
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => router.push('/añadir-maceta')}
+        onPress={() => router.push('/anadir-maceta')}
       >
         <FontAwesome name="plus" size={20} color="#000" />
         <Text style={styles.addText}>Añadir maceta</Text>
@@ -70,64 +64,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFDD',
     paddingTop: 60,
+    paddingHorizontal: 20,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
-    fontFamily: 'System',
-    marginBottom: 10,
+    marginBottom: 30,
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
   card: {
     backgroundColor: '#3D6775',
-    borderRadius: 25,
+    borderRadius: 20,
     padding: 15,
     marginBottom: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
   },
   plantImage: {
-    width: 65,
-    height: 65,
-    borderRadius: 12,
-    borderWidth: 4,
-    borderColor: '#fff',
+    width: 70,
+    height: 70,
+    borderRadius: 10,
+    marginRight: 12,
   },
-  cardContent: {
+  textContainer: {
     flex: 1,
-    marginLeft: 12,
+    justifyContent: 'center',
   },
   plantName: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
-    fontFamily: 'System',
   },
   stateText: {
     color: '#fff',
     fontSize: 14,
-    fontFamily: 'System',
   },
-  statusIcon: {
-    fontSize: 20,
-    marginHorizontal: 10,
+  estado: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 5,
   },
   viewButton: {
     backgroundColor: '#A2C579',
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
   },
   viewText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 14,
-    fontFamily: 'System',
   },
   addButton: {
     backgroundColor: '#A2C579',
@@ -140,11 +129,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
-    width: 160,
   },
   addText: {
     fontWeight: 'bold',
     color: '#000',
-    fontSize: 14,
   },
 });
