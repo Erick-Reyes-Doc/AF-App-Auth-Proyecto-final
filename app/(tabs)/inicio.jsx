@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { PLANTS } from '../../data/plants'; // <- Importamos desde el archivo nuevo
+import { PLANTS } from '../../data/plants';
 
 const { width } = Dimensions.get('window');
 
@@ -20,7 +20,8 @@ export default function HomeScreen() {
   const renderPlant = ({ item }) => (
     <View style={styles.card}>
       <Image source={item.image} style={styles.plantImage} />
-      <View style={{ flex: 1 }}>
+
+      <View style={styles.cardContent}>
         <Text style={styles.plantName}>{item.name}</Text>
         <Text style={styles.stateText}>Estado</Text>
       </View>
@@ -62,7 +63,7 @@ export default function HomeScreen() {
       </TouchableOpacity>
     </View>
   );
-} 
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -71,9 +72,10 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'System',
     marginBottom: 10,
   },
   listContent: {
@@ -82,7 +84,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#3D6775',
-    borderRadius: 20,
+    borderRadius: 25,
     padding: 15,
     marginBottom: 20,
     flexDirection: 'row',
@@ -90,19 +92,26 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   plantImage: {
-    width: 74,
-    height: 74,
-    borderRadius: 10,
-    marginRight: 12,
+    width: 65,
+    height: 65,
+    borderRadius: 12,
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: 12,
   },
   plantName: {
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'System',
   },
   stateText: {
     color: '#fff',
     fontSize: 14,
+    fontFamily: 'System',
   },
   statusIcon: {
     fontSize: 20,
@@ -110,13 +119,15 @@ const styles = StyleSheet.create({
   },
   viewButton: {
     backgroundColor: '#A2C579',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
   viewText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 14,
+    fontFamily: 'System',
   },
   addButton: {
     backgroundColor: '#A2C579',
@@ -129,9 +140,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
+    width: 160,
   },
   addText: {
     fontWeight: 'bold',
     color: '#000',
+    fontSize: 14,
   },
 });

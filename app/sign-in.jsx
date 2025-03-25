@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  KeyboardEvent,
 } from 'react-native';
 import { useSession } from '../ctx';
 import { router } from 'expo-router';
@@ -23,6 +24,7 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
   const handleSignIn = () => {
     if (email === 'usuario@ejemplo.com' && password === 'password123') {
@@ -34,16 +36,41 @@ export default function SignIn() {
     }
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          <View style={styles.curvedBackground} />
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () =>
+      setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () =>
+      setKeyboardVisible(false)
+    );
 
-          <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  return (
+    <View style={styles.root}>
+      {/* Mostrar imagen solo si el teclado está oculto */}
+      {!isKeyboardVisible && (
+        <Image
+          source={require('../assets/mano.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
+      )}
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        style={styles.contentWrapper}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+          >
             <Text style={styles.title}>GreenMate</Text>
             <Text style={styles.subtitle}>Iniciar sesión</Text>
 
@@ -70,62 +97,57 @@ export default function SignIn() {
               <Text style={styles.buttonText}>Ingresar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => router.push('/register')} style={styles.registerButton}>
-              <Text style={styles.registerButtonText}>Registrarse</Text>
-            </TouchableOpacity>
-
             <Text style={styles.registerText}>¿No tienes una cuenta?</Text>
-            <TouchableOpacity onPress={() => router.push('/register')}>
-              <Text style={styles.registerLink}>Regístrate</Text>
+
+            <TouchableOpacity
+              style={styles.registerButton}
+              onPress={() => router.push('/register')}
+            >
+              <Text style={styles.registerButtonText}>Regístrate</Text>
             </TouchableOpacity>
           </ScrollView>
-
-          <View style={styles.imageContainer}>
-            <Image
-              source={require('../assets/planta.png')}
-              style={styles.image}
-              resizeMode="contain"
-            />
-          </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
+export const screenOptions = {
+  headerShown: false,
+};
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
     backgroundColor: '#61A3BA',
-    justifyContent: 'space-between',
+    position: 'relative',
   },
-  curvedBackground: {
+  image: {
     position: 'absolute',
-    top: 0,
-    width: width,
-    height: '70%',
-    backgroundColor: '#61A3BA',
-    borderBottomLeftRadius: 100,
-    borderBottomRightRadius: 100,
-    zIndex: 0,
+    bottom: -35,        // Pegada al borde inferior
+    right: -18  ,         // Pegada al borde derecho
+    width: 430,
+    height: 370,
   },
-  content: {
-    paddingTop: 120,
+  
+
+  scrollContent: {
+    paddingTop: 60,
+    paddingBottom: 150,
     paddingHorizontal: 30,
     alignItems: 'center',
-    zIndex: 2,
   },
   title: {
-    fontSize: 42,
+    fontSize: 55,
     fontWeight: 'bold',
     color: '#FFFFDD',
-    marginBottom: 10,
+    marginBottom: 40,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 30,
     color: '#FFFFDD',
-    marginBottom: 25,
+    marginBottom: 30,
+    fontWeight: 'bold',
   },
   input: {
     width: '100%',
@@ -134,42 +156,38 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     color: '#FFFFDD',
     fontSize: 16,
-    marginBottom: 15,
+    marginBottom: 16,
   },
   button: {
     backgroundColor: '#882D2D',
     paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 25,
-    marginTop: 10,
+    borderRadius: 10,
+    marginTop: 5,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
   },
+  registerText: {
+    color: '#FFFFDD',
+    marginTop: 25,
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   registerButton: {
     backgroundColor: '#882D2D',
     paddingVertical: 12,
     paddingHorizontal: 40,
-    borderRadius: 25,
-    marginTop: 15,
+    borderRadius: 10,
+    marginTop: 2,
   },
   registerButtonText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
-  },
-  registerText: {
-    color: '#FFFFDD',
-    marginTop: 20,
-    fontSize: 14,
-  },
-  registerLink: {
-    color: '#FFFFDD',
-    fontWeight: 'bold',
-    textDecorationLine: 'underline',
-    marginTop: 4,
+    fontSize: 15,
   },
   error: {
     color: '#fff',
@@ -179,18 +197,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: '100%',
     marginTop: -5,
+    marginBottom: 10,
   },
-  imageContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 1,
+  wrapper: {
+    flex: 1,
+    overflow: 'hidden',   // Opcional: evita que se desborde la imagen
   },
-  image: {
-    width: 455,
-    height: 370,
-    opacity: 0.9,
-  },
+  
 });

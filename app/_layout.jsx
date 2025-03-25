@@ -6,6 +6,8 @@ export default function RootLayout() {
     return (
         <SessionProvider>
             <Stack>
+                <Stack.Screen name="sign-in" options={{ headerShown: false }} />
+                <Stack.Screen name="register" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen
                     name="detalle_planta"

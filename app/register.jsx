@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -23,6 +23,16 @@ export default function Register() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
+    const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+    useEffect(() => {
+        const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        return () => {
+            show.remove();
+            hide.remove();
+        };
+    }, []);
 
     const handleRegister = () => {
         if (!email || !confirmEmail || !password || !confirmPassword) {
@@ -33,8 +43,7 @@ export default function Register() {
             setErrorMessage('Las contraseñas no coinciden.');
         } else {
             setErrorMessage(null);
-            // Aquí puedes integrar Supabase u otro backend
-            router.replace('/'); // Redirige a la home
+            router.replace('/');
         }
     };
 
@@ -44,10 +53,11 @@ export default function Register() {
             style={styles.container}
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={styles.container}>
-                    <View style={styles.curvedBackground} />
-
-                    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                <View style={styles.wrapper}>
+                    <ScrollView
+                        contentContainerStyle={styles.scrollContent}
+                        keyboardShouldPersistTaps="handled"
+                    >
                         <Text style={styles.title}>GreenMate</Text>
                         <Text style={styles.subtitle}>Registro</Text>
 
@@ -89,57 +99,51 @@ export default function Register() {
                         </TouchableOpacity>
 
                         <Text style={styles.registerText}>¿Ya tienes una cuenta?</Text>
-                        <TouchableOpacity onPress={() => router.push('/sign-in')}>
-                            <Text style={styles.registerLink}>Inicia sesión</Text>
+
+                        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/sign-in')}>
+                            <Text style={styles.buttonText}>Inicia sesión</Text>
                         </TouchableOpacity>
                     </ScrollView>
 
-                    <View style={styles.imageContainer}>
+                    {!keyboardVisible && (
                         <Image
-                            source={require('../assets/planta.png')}
+                            source={require('../assets/plantitareg.png')}
                             style={styles.image}
                             resizeMode="contain"
                         />
-                    </View>
+                    )}
                 </View>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#A2C579',
-        justifyContent: 'space-between',
     },
-    curvedBackground: {
-        position: 'absolute',
-        top: 0,
-        width: width,
-        height: '70%',
-        backgroundColor: '#61A3BA',
-        borderBottomLeftRadius: 100,
-        borderBottomRightRadius: 100,
-        zIndex: 0,
+    wrapper: {
+        flex: 1,
+        position: 'relative',
     },
-    content: {
-        paddingTop: 100,
-        paddingHorizontal: 30,
+    scrollContent: {
         alignItems: 'center',
-        zIndex: 2,
+        paddingVertical: 50,
+        paddingHorizontal: 30,
     },
     title: {
-        fontSize: 42,
+        fontSize: 55,
         fontWeight: 'bold',
         color: '#FFFFDD',
-        marginBottom: 10,
+        marginBottom: 40,
+        fontFamily: 'System',
     },
     subtitle: {
-        fontSize: 20,
+        fontSize: 30,
         color: '#FFFFDD',
-        marginBottom: 25,
+        marginBottom: 30,
+        fontWeight: 'bold',
     },
     input: {
         width: '100%',
@@ -148,14 +152,21 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         color: '#FFFFDD',
         fontSize: 16,
-        marginBottom: 12,
+        marginBottom: 16,
     },
     button: {
         backgroundColor: '#882D2D',
         paddingVertical: 12,
         paddingHorizontal: 40,
-        borderRadius: 25,
+        borderRadius: 10,
         marginTop: 10,
+    },
+    loginButton: {
+        backgroundColor: '#882D2D',
+        paddingVertical: 12,
+        paddingHorizontal: 40,
+        borderRadius: 10,
+        marginTop: 12,
     },
     buttonText: {
         color: '#fff',
@@ -164,14 +175,9 @@ const styles = StyleSheet.create({
     },
     registerText: {
         color: '#FFFFDD',
-        marginTop: 20,
-        fontSize: 14,
-    },
-    registerLink: {
-        color: '#FFFFDD',
+        marginTop: 25,
+        fontSize: 16,
         fontWeight: 'bold',
-        textDecorationLine: 'underline',
-        marginTop: 4,
     },
     error: {
         color: '#fff',
@@ -180,19 +186,16 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         textAlign: 'center',
         width: '100%',
-        marginTop: 5,
-    },
-    imageContainer: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        alignItems: 'center',
-        zIndex: 1,
+        marginBottom: 10,
     },
     image: {
-        width: 455,
+        position: 'absolute',
+        bottom: -120,
+        left: 0,
+        right: 0,
+        alignSelf: 'center',
+        width: 430,
         height: 370,
-        opacity: 0.9,
+        zIndex: 0,
     },
 });
