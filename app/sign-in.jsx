@@ -12,8 +12,8 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardEvent,
 } from 'react-native';
+import { findUser } from '../data/localUsers'; 
 import { useSession } from '../ctx';
 import { router } from 'expo-router';
 
@@ -26,33 +26,34 @@ export default function SignIn() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
 
-  const handleSignIn = () => {
-    if (email === 'usuario@ejemplo.com' && password === 'password123') {
-      setErrorMessage(null);
-      signIn();
-      router.replace('/');
-    } else {
-      setErrorMessage('Correo o contraseña incorrectos.');
-    }
-  };
-
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () =>
-      setKeyboardVisible(true)
-    );
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () =>
-      setKeyboardVisible(false)
-    );
-
+    const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
     return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
+      show.remove();
+      hide.remove();
     };
   }, []);
 
+  const handleSignIn = async () => {
+    if (!email || !password) {
+      setErrorMessage('Por favor completa todos los campos.');
+      return;
+    }
+
+    const user = await findUser(email);
+
+    if (!user || user.password !== password) {
+      setErrorMessage('Correo o contraseña incorrectos.');
+    } else {
+      setErrorMessage(null);
+      signIn({ user: email }); // Guardamos la sesión local
+      router.replace('/');
+    }
+  };
+
   return (
     <View style={styles.root}>
-      {/* Mostrar imagen solo si el teclado está oculto */}
       {!isKeyboardVisible && (
         <Image
           source={require('../assets/mano.png')}
@@ -67,10 +68,7 @@ export default function SignIn() {
         style={styles.contentWrapper}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
             <Text style={styles.title}>GreenMate</Text>
             <Text style={styles.subtitle}>Iniciar sesión</Text>
 
@@ -80,8 +78,8 @@ export default function SignIn() {
               placeholderTextColor="#FFFFDD"
               value={email}
               onChangeText={setEmail}
+              autoCapitalize="none"
             />
-
             <TextInput
               style={styles.input}
               placeholder="Contraseña"

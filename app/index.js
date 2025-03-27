@@ -1,6 +1,12 @@
-// app/index.js
 import { Redirect } from 'expo-router';
+import { useSession } from '../ctx';
 
 export default function Index() {
-    return <Redirect href="/sign-in" />;
+    const { session } = useSession();
+
+    if (!session) {
+        return <Redirect href="/sign-in" />;
+    }
+
+    return <Redirect href="/(tabs)/inicio" />;
 }

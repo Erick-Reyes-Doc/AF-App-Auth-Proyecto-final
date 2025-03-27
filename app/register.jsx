@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    Image,
-    StyleSheet,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Keyboard,
-    TouchableWithoutFeedback,
+    View, Text, TextInput, TouchableOpacity, Image,
+    StyleSheet, Dimensions, KeyboardAvoidingView,
+    Platform, ScrollView, Keyboard, TouchableWithoutFeedback,
 } from 'react-native';
 import { router } from 'expo-router';
+import { addUser, findUser } from '../data/localUsers';
 
 const { width } = Dimensions.get('window');
 
@@ -34,34 +26,28 @@ export default function Register() {
         };
     }, []);
 
-    const handleRegister = () => {
+    const handleRegister = async () => {
         if (!email || !confirmEmail || !password || !confirmPassword) {
             setErrorMessage('Por favor completa todos los campos.');
         } else if (email !== confirmEmail) {
             setErrorMessage('Los correos no coinciden.');
         } else if (password !== confirmPassword) {
             setErrorMessage('Las contraseñas no coinciden.');
+        } else if (await findUser(email)) {
+            setErrorMessage('Este correo ya está registrado.');
         } else {
+            await addUser({ email, password });
             setErrorMessage(null);
-            router.push('/sign-in'); // 👉 Cambiado a push
+            alert('Registro exitoso 🎉');
+            router.push('/sign-in');
         }
     };
 
-    const handleGoToLogin = () => {
-        router.push('/sign-in'); // 👉 Cambiado a push
-    };
-
     return (
-        <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.container}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View style={styles.wrapper}>
-                    <ScrollView
-                        contentContainerStyle={styles.scrollContent}
-                        keyboardShouldPersistTaps="handled"
-                    >
+                    <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                         <Text style={styles.title}>GreenMate</Text>
                         <Text style={styles.subtitle}>Registro</Text>
 
@@ -103,8 +89,7 @@ export default function Register() {
                         </TouchableOpacity>
 
                         <Text style={styles.registerText}>¿Ya tienes una cuenta?</Text>
-
-                        <TouchableOpacity style={styles.loginButton} onPress={handleGoToLogin}>
+                        <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/sign-in')}>
                             <Text style={styles.buttonText}>Inicia sesión</Text>
                         </TouchableOpacity>
                     </ScrollView>
@@ -121,7 +106,6 @@ export default function Register() {
         </KeyboardAvoidingView>
     );
 }
-
 const styles = StyleSheet.create({
     container: {
         flex: 1,
