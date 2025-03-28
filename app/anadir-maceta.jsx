@@ -11,17 +11,17 @@ import {
     Image,
     Alert,
     Pressable,
+    Keyboard,
+    TouchableWithoutFeedback,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-export const screenOptions = {
-    headerShown: false,
-};
+import { guardarMaceta } from '../utils/macetasService';
 
 export default function AñadirMaceta() {
     const router = useRouter();
+
     const [form, setForm] = useState({
         nombre: '',
         especie: '',
@@ -39,12 +39,8 @@ export default function AñadirMaceta() {
 
     const handleDateChange = (event, selectedDate) => {
         setShowDatePicker(false);
-        if (selectedDate) {
-            setDate(selectedDate);
-        }
+        if (selectedDate) setDate(selectedDate);
     };
-
-    const formattedDate = date.toLocaleDateString('es-MX');
 
     const handleTakePhoto = async () => {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -83,21 +79,30 @@ export default function AñadirMaceta() {
         }
     };
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
         const camposVacios = Object.values(form).some((val) => val === '');
         if (camposVacios || !image) {
             Alert.alert('Error', 'Completa todos los campos y agrega una imagen.');
             return;
         }
 
-        const datosMaceta = {
-            ...form,
-            siembra: formattedDate,
-            imagen: image,
+        const nuevaMaceta = {
+            nombre: form.nombre,
+            especie: form.especie,
+            temperatura: parseFloat(form.temperatura),
+            humedad: parseFloat(form.humedad),
+            creado_en: date.toISOString(),
+            imagen_url: image,
         };
 
-        console.log('Guardando maceta:', datosMaceta);
-        router.replace('/(tabs)/inicio');
+        try {
+            await guardarMaceta(nuevaMaceta);
+            Alert.alert('Éxito', 'Maceta guardada correctamente');
+            router.replace('/(tabs)/inicio');
+        } catch (error) {
+            console.error('Error al guardar:', error);
+            Alert.alert('Error', 'Hubo un problema al guardar la maceta.');
+        }
     };
 
     return (
@@ -105,81 +110,82 @@ export default function AñadirMaceta() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.container}
         >
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-                <Text style={styles.title}>Añadir Maceta</Text>
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+                    <Text style={styles.title}>Añadir Maceta</Text>
 
-                <View style={styles.imageButtons}>
-                    <TouchableOpacity onPress={handleTakePhoto} style={styles.uploadButton}>
-                        <Text style={styles.uploadButtonText}>📷 Tomar Foto</Text>
-                    </TouchableOpacity>
+                    <View style={styles.imageButtons}>
+                        <TouchableOpacity onPress={handleTakePhoto} style={styles.uploadButton}>
+                            <Text style={styles.uploadButtonText}>📷 Tomar Foto</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity onPress={handlePickFromGallery} style={styles.uploadButton}>
-                        <Text style={styles.uploadButtonText}>🖼 Galería</Text>
-                    </TouchableOpacity>
-                </View>
+                        <TouchableOpacity onPress={handlePickFromGallery} style={styles.uploadButton}>
+                            <Text style={styles.uploadButtonText}>🖼 Galería</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                {image && <Image source={{ uri: image }} style={styles.previewImage} />}
+                    {image && <Image source={{ uri: image }} style={styles.previewImage} />}
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Nombre"
-                    placeholderTextColor="#666"
-                    onChangeText={(text) => handleChange('nombre', text)}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Especie"
-                    placeholderTextColor="#666"
-                    onChangeText={(text) => handleChange('especie', text)}
-                />
-
-                {/* 📅 Calendario */}
-                <Pressable onPress={() => setShowDatePicker(true)}>
                     <TextInput
                         style={styles.input}
-                        placeholder="Fecha de siembra"
-                        value={formattedDate}
-                        editable={false}
+                        placeholder="Nombre"
                         placeholderTextColor="#666"
+                        onChangeText={(text) => handleChange('nombre', text)}
                     />
-                </Pressable>
-                {showDatePicker && (
-                    <DateTimePicker
-                        value={date}
-                        mode="date"
-                        display="default"
-                        onChange={handleDateChange}
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Especie"
+                        placeholderTextColor="#666"
+                        onChangeText={(text) => handleChange('especie', text)}
                     />
-                )}
+                    <Pressable onPress={() => setShowDatePicker(true)}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Fecha de siembra"
+                            value={date.toLocaleDateString('es-MX')}
+                            editable={false}
+                            placeholderTextColor="#666"
+                        />
+                    </Pressable>
+                    {showDatePicker && (
+                        <DateTimePicker
+                            value={date}
+                            mode="date"
+                            display="default"
+                            onChange={handleDateChange}
+                        />
+                    )}
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Temperatura ideal (°C)"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    onChangeText={(text) => handleChange('temperatura', text)}
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Humedad ideal (%)"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    onChangeText={(text) => handleChange('humedad', text)}
-                />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Temperatura ideal (°C)"
+                        placeholderTextColor="#666"
+                        keyboardType="numeric"
+                        onChangeText={(text) => handleChange('temperatura', text)}
+                    />
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Humedad ideal (%)"
+                        placeholderTextColor="#666"
+                        keyboardType="numeric"
+                        onChangeText={(text) => handleChange('humedad', text)}
+                    />
 
-                <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={[styles.button, styles.cancelar]} onPress={() => router.back()}>
-                        <Text style={styles.buttonText}>Cancelar</Text>
-                    </TouchableOpacity>
+                    <View style={styles.buttonContainer}>
+                        <TouchableOpacity style={[styles.button, styles.cancelar]} onPress={() => router.back()}>
+                            <Text style={styles.buttonText}>Cancelar</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity style={[styles.button, styles.guardar]} onPress={handleGuardar}>
-                        <Text style={styles.buttonText}>Guardar</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+                        <TouchableOpacity style={[styles.button, styles.guardar]} onPress={handleGuardar}>
+                            <Text style={styles.buttonText}>Guardar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollView>
+            </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

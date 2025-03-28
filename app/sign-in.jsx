@@ -12,15 +12,15 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from 'react-native';
-import { findUser } from '../data/localUsers'; 
-import { useSession } from '../ctx';
-import { router } from 'expo-router';
+import { findUser, signInUser } from '../utils/authService';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
 export default function SignIn() {
-  const { signIn } = useSession();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
@@ -41,14 +41,27 @@ export default function SignIn() {
       return;
     }
 
-    const user = await findUser(email);
+    try {
+      const user = await findUser(email);
 
-    if (!user || user.password !== password) {
-      setErrorMessage('Correo o contraseña incorrectos.');
-    } else {
+      if (!user) {
+        setErrorMessage('El correo no está registrado.');
+        return;
+      }
+
+      if (user.password !== password) {
+        setErrorMessage('Correo o contraseña incorrectos.');
+        return;
+      }
+
+      // Guardar sesión del usuario
+      await signInUser(user);
       setErrorMessage(null);
-      signIn({ user: email }); // Guardamos la sesión local
-      router.replace('/');
+      Alert.alert('Inicio de sesión exitoso', `¡Bienvenido ${user.email}!`);
+      router.replace('/(tabs)/inicio'); // Ajusta esto según tu ruta de inicio
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      setErrorMessage('Error al iniciar sesión. Inténtalo de nuevo.');
     }
   };
 
@@ -79,6 +92,7 @@ export default function SignIn() {
               value={email}
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
             <TextInput
               style={styles.input}

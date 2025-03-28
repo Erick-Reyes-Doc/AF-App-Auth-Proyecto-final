@@ -13,45 +13,48 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { PLANTS } from '../data/plants';
+import { obtenerMacetaPorId, editarMaceta } from '../utils/macetasService';
 
 const { width } = Dimensions.get('window');
 
 export default function EditarPlanta() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
-
-    const planta = PLANTS.find(p => p.id === id);
-
     const [form, setForm] = useState({
-        name: '',
+        nombre: '',
         especie: '',
         siembra: '',
-        temperaturaIdeal: '',
-        humedadIdeal: '',
+        temperatura: '',
+        humedad: '',
+        imagen_url: '',
     });
 
     const [showDatePicker, setShowDatePicker] = useState(false);
 
+    // Cargar datos de la maceta
     useEffect(() => {
-        if (planta) {
-            setForm({
-                name: planta.name,
-                especie: planta.especie,
-                siembra: planta.siembra,
-                temperaturaIdeal: planta.temperaturaIdeal,
-                humedadIdeal: planta.humedadIdeal,
-            });
-        }
-    }, [planta]);
+        const cargarDatos = async () => {
+            try {
+                const planta = await obtenerMacetaPorId(id);
+                setForm({
+                    nombre: planta.nombre,
+                    especie: planta.especie,
+                    siembra: planta.creado_en || new Date().toISOString(),
+                    temperatura: String(planta.temperatura),
+                    humedad: String(planta.humedad),
+                    imagen_url: planta.imagen_url,
+                });
+            } catch (error) {
+                Alert.alert('Error', 'No se pudieron cargar los datos de la maceta.');
+            }
+        };
+        cargarDatos();
+    }, [id]);
 
-    const handleChange = (field, value) => {
-        setForm({ ...form, [field]: value });
-    };
-
-    const handleGuardar = () => {
-        const temp = parseInt(form.temperaturaIdeal);
-        const hum = parseInt(form.humedadIdeal);
+    // Guardar cambios
+    const handleGuardar = async () => {
+        const temp = parseFloat(form.temperatura);
+        const hum = parseFloat(form.humedad);
 
         if (isNaN(temp) || temp < 0 || temp > 60) {
             Alert.alert('Error', 'La temperatura debe estar entre 0°C y 60°C.');
@@ -63,29 +66,43 @@ export default function EditarPlanta() {
             return;
         }
 
-        Alert.alert('Cambios guardados', 'Los datos de la planta han sido actualizados.');
-        router.back();
+        try {
+            const datosActualizados = {
+                ...form,
+                id,
+                temperatura: temp,
+                humedad: hum,
+            };
+            await editarMaceta(datosActualizados);
+            Alert.alert('Éxito', 'Datos actualizados correctamente.');
+            router.replace('/(tabs)/inicio');
+        } catch (error) {
+            Alert.alert('Error', 'No se pudo actualizar la maceta.');
+        }
     };
 
+    // Cancelar edición
     const handleCancelar = () => {
         router.back();
     };
 
+    // Manejar cambios en el formulario
+    const handleChange = (field, value) => {
+        setForm((prev) => ({ ...prev, [field]: value }));
+    };
+
+    // Manejar la selección de la fecha
     const handleDateChange = (event, selectedDate) => {
         setShowDatePicker(false);
         if (selectedDate) {
-            const fecha = selectedDate.toLocaleDateString('es-MX');
-            setForm({ ...form, siembra: fecha });
+            setForm((prev) => ({ ...prev, siembra: selectedDate.toISOString() }));
         }
     };
 
-    if (!planta) {
+    if (!form.nombre) {
         return (
             <View style={styles.container}>
-                <Text style={styles.notFound}>Planta no encontrada</Text>
-                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelar}>
-                    <Text style={styles.cancelText}>Volver</Text>
-                </TouchableOpacity>
+                <Text style={styles.notFound}>Cargando o planta no encontrada</Text>
             </View>
         );
     }
@@ -94,13 +111,17 @@ export default function EditarPlanta() {
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Editar Planta</Text>
 
-            <Image source={planta.image} style={styles.image} />
+            {form.imagen_url ? (
+                <Image source={{ uri: form.imagen_url }} style={styles.image} />
+            ) : (
+                <Text style={styles.notFound}>Imagen no disponible</Text>
+            )}
 
             <TextInput
                 style={styles.input}
                 placeholder="Nombre"
-                value={form.name}
-                onChangeText={(text) => handleChange('name', text)}
+                value={form.nombre}
+                onChangeText={(text) => handleChange('nombre', text)}
             />
             <TextInput
                 style={styles.input}
@@ -109,12 +130,12 @@ export default function EditarPlanta() {
                 onChangeText={(text) => handleChange('especie', text)}
             />
 
-            {/* Fecha de siembra con calendario */}
+            {/* Calendario */}
             <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                 <TextInput
                     style={styles.input}
                     placeholder="Fecha de siembra"
-                    value={form.siembra}
+                    value={new Date(form.siembra).toLocaleDateString('es-MX')}
                     editable={false}
                     pointerEvents="none"
                 />
@@ -122,7 +143,7 @@ export default function EditarPlanta() {
 
             {showDatePicker && (
                 <DateTimePicker
-                    value={new Date()}
+                    value={new Date(form.siembra)}
                     mode="date"
                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                     onChange={handleDateChange}
@@ -133,26 +154,21 @@ export default function EditarPlanta() {
                 style={styles.input}
                 placeholder="Temperatura ideal (0-60°C)"
                 keyboardType="numeric"
-                value={form.temperaturaIdeal}
-                onChangeText={(text) =>
-                    handleChange('temperaturaIdeal', text.replace(/[^0-9]/g, ''))
-                }
+                value={form.temperatura}
+                onChangeText={(text) => handleChange('temperatura', text)}
             />
             <TextInput
                 style={styles.input}
                 placeholder="Humedad ideal (0-100%)"
                 keyboardType="numeric"
-                value={form.humedadIdeal}
-                onChangeText={(text) =>
-                    handleChange('humedadIdeal', text.replace(/[^0-9]/g, ''))
-                }
+                value={form.humedad}
+                onChangeText={(text) => handleChange('humedad', text)}
             />
 
             <View style={styles.buttonGroup}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleGuardar}>
                     <Text style={styles.buttonText}>Guardar</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelar}>
                     <Text style={styles.buttonText}>Cancelar</Text>
                 </TouchableOpacity>
@@ -198,14 +214,14 @@ const styles = StyleSheet.create({
     },
     saveButton: {
         flex: 1,
-        backgroundColor: '#D76363', // rojo
+        backgroundColor: '#8ED739',
         padding: 14,
         borderRadius: 12,
         alignItems: 'center',
     },
     cancelBtn: {
         flex: 1,
-        backgroundColor: '#89AED3', // azul
+        backgroundColor: '#C25E5E',
         padding: 14,
         borderRadius: 12,
         alignItems: 'center',

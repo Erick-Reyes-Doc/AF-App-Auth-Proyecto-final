@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,27 +9,71 @@ import {
   Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { PLANTS } from '../../data/plants';
+import { useRouter, useFocusEffect } from 'expo-router';
+import { obtenerMacetas } from '../../utils/macetasService';
 
 const { width } = Dimensions.get('window');
 
+// Iconos por estado
+const estadoIcons = {
+  Óptima: 'smile-o',
+  Baja: 'meh-o',
+  Seca: 'frown-o',
+  Exceso: 'exclamation-circle',
+};
+
+// Colores por estado
+const estadoColors = {
+  Óptima: '#2ecc71',   // Verde
+  Baja: '#f1c40f',     // Amarillo
+  Seca: '#e74c3c',     // Rojo
+  Exceso: '#3498db',   // Azul
+};
+
 export default function HomeScreen() {
   const router = useRouter();
+  const [macetas, setMacetas] = useState([]);
+
+  // Obtener macetas al cargar la pantalla
+  const cargarMacetas = async () => {
+    try {
+      const data = await obtenerMacetas();
+      setMacetas(data);
+    } catch (error) {
+      console.error('Error al cargar macetas:', error);
+    }
+  };
+
+  // Ejecutar cargarMacetas cada vez que la pantalla esté en foco
+  useFocusEffect(
+    useCallback(() => {
+      cargarMacetas();
+    }, [])
+  );
 
   const renderPlant = ({ item }) => (
     <View style={styles.card}>
-      <Image source={item.image} style={styles.plantImage} />
+      <Image source={{ uri: item.imagen_url }} style={styles.plantImage} />
 
       <View style={styles.textContainer}>
-        <Text style={styles.plantName}>{item.name}</Text>
-        <Text style={styles.stateText}>Estado</Text>
-        <Text style={styles.estado}>{item.estado}</Text>
+        <Text style={styles.plantName}>{item.nombre}</Text>
+        {/* Estado Visual */}
+        <View style={styles.statusContainer}>
+          <FontAwesome
+            name={estadoIcons[item.estado] || 'question-circle'}
+            size={20}
+            color={estadoColors[item.estado] || '#888'}
+          />
+          <Text style={[styles.estadoText, { color: estadoColors[item.estado] || '#888' }]}>
+            {item.estado || 'Desconocido'}
+          </Text>
+        </View>
       </View>
 
+      {/* Botón Ver Más */}
       <TouchableOpacity
         style={styles.viewButton}
-        onPress={() => router.push(`/detalle-planta?id=${item.id}`)} // ✅ Cambio aquí
+        onPress={() => router.push(`/detalle-planta?id=${item.id}`)}
       >
         <Text style={styles.viewText}>Ver más</Text>
       </TouchableOpacity>
@@ -40,13 +84,17 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Inicio</Text>
 
-      <FlatList
-        data={PLANTS}
-        renderItem={renderPlant}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+      {macetas.length === 0 ? (
+        <Text style={styles.emptyText}>No hay macetas agregadas.</Text>
+      ) : (
+        <FlatList
+          data={macetas}
+          renderItem={renderPlant}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       <TouchableOpacity
         style={styles.addButton}
@@ -71,6 +119,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 30,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 50,
   },
   listContent: {
     paddingBottom: 120,
@@ -98,15 +152,16 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 17,
     fontWeight: 'bold',
+    marginBottom: 6,
   },
-  stateText: {
-    color: '#fff',
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  estadoText: {
     fontSize: 14,
-  },
-  estado: {
-    color: '#fff',
-    fontSize: 16,
-    marginTop: 5,
+    fontWeight: 'bold',
   },
   viewButton: {
     backgroundColor: '#A2C579',

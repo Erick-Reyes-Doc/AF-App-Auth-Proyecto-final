@@ -1,45 +1,69 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View, Text, TextInput, TouchableOpacity, Image,
-    StyleSheet, Dimensions, KeyboardAvoidingView,
-    Platform, ScrollView, Keyboard, TouchableWithoutFeedback,
+    View,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    StyleSheet,
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    Keyboard,
+    TouchableWithoutFeedback,
+    Alert,
 } from 'react-native';
-import { router } from 'expo-router';
-import { addUser, findUser } from '../data/localUsers';
+import { useRouter } from 'expo-router';
+import { addUser, findUser } from '../utils/authService';
 
 const { width } = Dimensions.get('window');
 
 export default function Register() {
+    const router = useRouter();
+    const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
-    const [confirmEmail, setConfirmEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
 
     useEffect(() => {
-        const show = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
-        const hide = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+        const showListener = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+        const hideListener = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
         return () => {
-            show.remove();
-            hide.remove();
+            showListener.remove();
+            hideListener.remove();
         };
     }, []);
 
+    // Función para manejar el registro
     const handleRegister = async () => {
-        if (!email || !confirmEmail || !password || !confirmPassword) {
+        if (!username) {
+            setErrorMessage('Por favor ingresa un nombre de usuario.');
+            return;
+        }
+        if (!email || !password || !confirmPassword) {
             setErrorMessage('Por favor completa todos los campos.');
-        } else if (email !== confirmEmail) {
-            setErrorMessage('Los correos no coinciden.');
-        } else if (password !== confirmPassword) {
+            return;
+        }
+        if (password !== confirmPassword) {
             setErrorMessage('Las contraseñas no coinciden.');
-        } else if (await findUser(email)) {
-            setErrorMessage('Este correo ya está registrado.');
-        } else {
-            await addUser({ email, password });
-            setErrorMessage(null);
-            alert('Registro exitoso 🎉');
+            return;
+        }
+
+        try {
+            const userExists = await findUser(email);
+            if (userExists) {
+                setErrorMessage('Este correo ya está registrado.');
+                return;
+            }
+
+            await addUser({ username, email, password });
+            Alert.alert('Registro exitoso', '¡Tu cuenta ha sido creada correctamente!');
             router.push('/sign-in');
+        } catch (error) {
+            console.error('Error en el registro:', error);
+            setErrorMessage('Ocurrió un error durante el registro. Inténtalo nuevamente.');
         }
     };
 
@@ -51,20 +75,26 @@ export default function Register() {
                         <Text style={styles.title}>GreenMate</Text>
                         <Text style={styles.subtitle}>Registro</Text>
 
+                        {/* Campo para el Nombre de Usuario */}
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Nombre de usuario"
+                            placeholderTextColor="#FFFFDD"
+                            value={username}
+                            onChangeText={setUsername}
+                        />
+
+                        {/* Campo para el Correo */}
                         <TextInput
                             style={styles.input}
                             placeholder="Correo electrónico"
                             placeholderTextColor="#FFFFDD"
                             value={email}
                             onChangeText={setEmail}
+                            keyboardType="email-address"
                         />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Confirmar correo electrónico"
-                            placeholderTextColor="#FFFFDD"
-                            value={confirmEmail}
-                            onChangeText={setConfirmEmail}
-                        />
+
+                        {/* Campo para la Contraseña */}
                         <TextInput
                             style={styles.input}
                             placeholder="Contraseña"
@@ -73,6 +103,8 @@ export default function Register() {
                             value={password}
                             onChangeText={setPassword}
                         />
+
+                        {/* Confirmación de Contraseña */}
                         <TextInput
                             style={styles.input}
                             placeholder="Confirmar contraseña"
@@ -84,28 +116,23 @@ export default function Register() {
 
                         {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
 
+                        {/* Botón de Registro */}
                         <TouchableOpacity style={styles.button} onPress={handleRegister}>
                             <Text style={styles.buttonText}>Registrar</Text>
                         </TouchableOpacity>
 
+                        {/* Enlace a Iniciar Sesión */}
                         <Text style={styles.registerText}>¿Ya tienes una cuenta?</Text>
                         <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/sign-in')}>
                             <Text style={styles.buttonText}>Inicia sesión</Text>
                         </TouchableOpacity>
                     </ScrollView>
-
-                    {!keyboardVisible && (
-                        <Image
-                            source={require('../assets/plantitareg.png')}
-                            style={styles.image}
-                            resizeMode="contain"
-                        />
-                    )}
                 </View>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -175,15 +202,5 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         width: '100%',
         marginBottom: 10,
-    },
-    image: {
-        position: 'absolute',
-        bottom: -120,
-        left: 0,
-        right: 0,
-        alignSelf: 'center',
-        width: 430,
-        height: 370,
-        zIndex: -1,
     },
 });
