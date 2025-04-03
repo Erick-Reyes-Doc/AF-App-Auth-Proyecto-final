@@ -1,4 +1,4 @@
-# 🌱 Maceta Inteligente - Plant Care Assistant
+# 🌱 Maceta Inteligente - GreenMate
 
 ## 📝 Descripción del Problema
 
