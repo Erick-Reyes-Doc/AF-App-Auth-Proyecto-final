@@ -46,7 +46,7 @@ Desarrollar una **maceta inteligente** que mida la humedad del suelo y exprese e
 
 ## 👨‍💻 Autor
 
-**Erick** – [@tuusuario](https://github.com/Erick-Reyes-Doc)
+**Erick** – [Erick Reyes](https://github.com/Erick-Reyes-Doc)
 
 ---
 
